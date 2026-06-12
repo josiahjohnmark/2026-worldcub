@@ -13,15 +13,11 @@ export default function Page() {
   // Loader states
   const [firstNum, setFirstNum] = useState(1);
   const [secondNum, setSecondNum] = useState(1);
-  const [loaderStage, setLoaderStage] = useState<'login-screen' | 'blur-transition' | 'counting-first' | 'counting-second' | 'complete' | 'splitting' | 'dismissed'>('login-screen');
+  const [loaderStage, setLoaderStage] = useState<'login-screen' | 'counting-first' | 'counting-second' | 'complete' | 'splitting' | 'dismissed'>('login-screen');
+  const [trophyClicks, setTrophyClicks] = useState(0);
 
   React.useEffect(() => {
-    if (loaderStage === 'blur-transition') {
-      const timeout = setTimeout(() => {
-        setLoaderStage('counting-first');
-      }, 900);
-      return () => clearTimeout(timeout);
-    } else if (loaderStage === 'counting-first') {
+    if (loaderStage === 'counting-first') {
       const timer = setInterval(() => {
         setFirstNum((prev) => {
           if (prev >= 20) {
@@ -31,7 +27,7 @@ export default function Page() {
           }
           return prev + 1;
         });
-      }, 90);
+      }, 70);
       return () => clearInterval(timer);
     } else if (loaderStage === 'counting-second') {
       const timer = setInterval(() => {
@@ -43,7 +39,7 @@ export default function Page() {
           }
           return prev + 1;
         });
-      }, 90);
+      }, 70);
       return () => clearInterval(timer);
     } else if (loaderStage === 'complete') {
       const timeout = setTimeout(() => {
@@ -62,11 +58,11 @@ export default function Page() {
 
   const teamKeys: ('argentina' | 'brazil' | 'england' | 'france' | 'spain' | 'portugal')[] = [
     'argentina',
-    'brazil',
-    'england',
-    'france',
+    'portugal',
     'spain',
-    'portugal'
+    'france',
+    'brazil',
+    'england'
   ];
 
   const handleNext = () => {
@@ -412,6 +408,18 @@ export default function Page() {
             alt="World Cup Trophy" 
             className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain rounded-2xl select-none filter contrast-125 brightness-110 drop-shadow-[0_8px_25px_rgba(0,0,0,0.85)] transition-all duration-500 hover:scale-110 cursor-pointer"
             style={{ mixBlendMode: 'screen' }} 
+            onClick={() => {
+              setTrophyClicks((prev) => {
+                const nextVal = prev + 1;
+                if (nextVal >= 5) {
+                  setFirstNum(1);
+                  setSecondNum(1);
+                  setLoaderStage('login-screen');
+                  return 0; // Reset clicks
+                }
+                return nextVal;
+              });
+            }}
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.mixBlendMode = 'normal';
             }}
@@ -454,8 +462,8 @@ export default function Page() {
                   setHoveredPlayer(null);
                   setClickedPlayer(null);
                 }}
-                className={`relative py-1.5 px-3 md:py-2.5 md:px-5 rounded-full text-white font-extrabold flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 text-center
-                  ${isActive ? `${textColorClass} bg-white/10 font-black shadow-[0_4px_20px_rgba(0,0,0,0.5)]` : 'text-zinc-450'}`}
+                className={`relative py-1.5 px-3 md:py-2.5 md:px-5 rounded-full text-zinc-300 font-extrabold flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 text-center hover:text-white
+                  ${isActive ? `${textColorClass} bg-white/10 text-white font-black shadow-[0_4px_20px_rgba(0,0,0,0.5)]` : ''}`}
                 id={`nav-btn-${teamKey.toLowerCase()}`}
                 style={{
                   textShadow: isActive ? '0 0 12px currentColor' : '0 2px 4px rgba(0,0,0,0.9)'
@@ -507,20 +515,27 @@ export default function Page() {
       {/* Slide Wipe Container holding all team setups dynamically */}
       <div className="absolute inset-x-0 bottom-0 top-0 z-10 overflow-hidden pointer-events-none">
         
-        {Object.values(teams).map((team) => {
-          const isActive = activeTeam === team.id;
+        {teamKeys.map((teamKey) => {
+          const team = teams[teamKey];
+          const isActive = activeTeam === teamKey;
           const isTeamContentActive = isActive && (loaderStage === 'splitting' || loaderStage === 'dismissed');
           const activeIdx = teamKeys.indexOf(activeTeam);
-          const teamIdx = teamKeys.indexOf(team.id as any);
+          const teamIdx = teamKeys.indexOf(teamKey);
+
+          let diff = teamIdx - activeIdx;
+          const N = teamKeys.length;
+          if (diff <= -N / 2) diff += N;
+          if (diff > N / 2) diff -= N;
+
           const transformClass = isActive 
             ? 'translate-x-0 opacity-100 pointer-events-auto filter blur-none' 
-            : (teamIdx < activeIdx 
+            : (diff < 0 
                 ? '-translate-x-[110%] opacity-0 pointer-events-none filter blur-sm' 
                 : 'translate-x-[110%] opacity-0 pointer-events-none filter blur-sm');
 
           return (
             <div 
-              key={team.id}
+              key={teamKey}
               className={`absolute inset-0 transition-all duration-[1200ms] cubic-bezier(0.16, 1, 0.3, 1) flex flex-col justify-between ${transformClass}`}
             >
               {/* Football backdrop behind title (z-5) */}
@@ -607,11 +622,8 @@ export default function Page() {
                   return (
                     <div
                       key={p.id}
-                      className="absolute cursor-pointer pointer-events-auto z-30 transition-all duration-300"
+                      className="absolute pointer-events-none z-30 transition-all duration-300"
                       style={{ left: p.left, width: p.width, bottom: p.bottom, height: p.height }}
-                      onMouseEnter={() => setHoveredPlayer(p.id)}
-                      onMouseLeave={() => setHoveredPlayer(null)}
-                      onClick={() => setClickedPlayer(clickedPlayer === p.id ? null : p.id)}
                     >
                       {/* Premium floating tag displayed on top of their head */}
                       <motion.div 
@@ -668,10 +680,10 @@ export default function Page() {
         id="app-footer"
       >
         <div 
-          className="relative py-2.5 px-6 rounded-full neo-liquid-glass text-[10px] md:text-xs font-mono text-zinc-300 flex flex-wrap items-center justify-center gap-2 md:gap-3 shadow-[0_15px_45px_rgba(0,0,0,0.85)] max-w-full"
+          className="relative py-3.5 px-8 rounded-full liquid-navbar-glass text-[11px] md:text-sm font-mono text-zinc-100 flex flex-wrap items-center justify-center gap-3 md:gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95)] max-w-full"
           id="status-container"
         >
-          <span className={`inline-block w-1.5 h-1.5 rounded-full animate-pulse mr-1 shrink-0 ${
+          <span className={`inline-block w-2.5 h-2.5 rounded-full animate-pulse mr-2 shrink-0 ${
             activeTeam === 'argentina' ? 'bg-sky-400' :
             activeTeam === 'brazil' ? 'bg-emerald-400' :
             activeTeam === 'england' ? 'bg-red-500' :
@@ -682,10 +694,10 @@ export default function Page() {
           {teams[activeTeam]?.players.map((p, idx) => (
             <React.Fragment key={p.id}>
               <button 
-                className={`tracking-[0.2em] md:tracking-[0.25em] uppercase transition-all duration-300 cursor-pointer font-bold outline-none
+                className={`tracking-[0.25em] uppercase transition-all duration-300 cursor-pointer font-black outline-none
                   ${activePlayerId === p.id 
-                    ? 'text-white scale-105 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] font-black' 
-                    : 'text-zinc-400 hover:text-white'}`}
+                    ? 'text-white scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,1)] underline underline-offset-4 decoration-2' 
+                    : 'text-zinc-100 hover:text-white hover:scale-105'}`}
                 onMouseEnter={() => setHoveredPlayer(p.id)}
                 onMouseLeave={() => setHoveredPlayer(null)}
                 onClick={() => setClickedPlayer(clickedPlayer === p.id ? null : p.id)}
@@ -694,7 +706,7 @@ export default function Page() {
                 {p.name}
               </button>
               {idx < (teams[activeTeam]?.players?.length ?? 0) - 1 && (
-                <span className="text-zinc-600 font-extrabold select-none shrink-0">•</span>
+                <span className="text-zinc-500/60 font-black select-none shrink-0 text-xs">•</span>
               )}
             </React.Fragment>
           ))}
@@ -705,91 +717,116 @@ export default function Page() {
       {loaderStage !== 'dismissed' && (
         <div className="fixed inset-0 z-[100] h-screen w-screen overflow-hidden select-none pointer-events-auto flex">
           
-          {/* LEFT SLIDING PANEL - Represents 'FI' & '20' */}
+          {/* Trademark watermark at the top - dissolves immediately before page splits */}
           <motion.div
+            initial={{ opacity: 0, y: -20 }}
             animate={{ 
-              x: loaderStage === 'splitting' ? '-100%' : '0%',
-              filter: loaderStage === 'blur-transition' ? 'blur(15px)' : 'blur(0px)',
-              scale: loaderStage === 'blur-transition' ? 0.98 : 1
-            }}
-            transition={{ ease: [0.16, 1, 0.3, 1], duration: 1.6 }}
-            className="absolute top-0 bottom-0 left-0 w-[50.5vw] bg-[#020407] z-[100] flex flex-col items-end justify-center pr-2 md:pr-4 overflow-hidden border-r border-white/5"
-          >
-            <div className="flex flex-col items-end">
-              <h2 className="font-anton text-[18vw] sm:text-[16vw] md:text-[14vw] uppercase tracking-tighter leading-[0.8] text-white select-none">
-                FI
-              </h2>
-              <motion.div 
-                initial={{ opacity: 0, height: 0, scale: 0.8, y: 30 }}
-                animate={{ 
-                  opacity: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 1 : 0,
-                  height: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 'auto' : 0,
-                  scale: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 1 : 0.8,
-                  y: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 0 : 30
-                }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="font-anton text-[18vw] sm:text-[16vw] md:text-[14vw] uppercase tracking-tighter leading-[0.8] text-white select-none mt-3 md:mt-5 overflow-hidden"
-              >
-                {firstNum.toString().padStart(2, '0')}
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* RIGHT SLIDING PANEL - Represents 'FA' & '26' */}
-          <motion.div
-            animate={{ 
-              x: loaderStage === 'splitting' ? '100%' : '0%',
-              filter: loaderStage === 'blur-transition' ? 'blur(15px)' : 'blur(0px)',
-              scale: loaderStage === 'blur-transition' ? 0.98 : 1
-            }}
-            transition={{ ease: [0.16, 1, 0.3, 1], duration: 1.6 }}
-            className="absolute top-0 bottom-0 right-0 w-[50.5vw] bg-[#020407] z-[100] flex flex-col items-start justify-center pl-2 md:pl-4 overflow-hidden"
-          >
-            <div className="flex flex-col items-start">
-              <h2 className="font-anton text-[18vw] sm:text-[16vw] md:text-[14vw] uppercase tracking-tighter leading-[0.8] text-white select-none">
-                FA
-              </h2>
-              <motion.div 
-                initial={{ opacity: 0, height: 0, scale: 0.8, y: 30 }}
-                animate={{ 
-                  opacity: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 1 : 0,
-                  height: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 'auto' : 0,
-                  scale: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 1 : 0.8,
-                  y: (loaderStage !== 'login-screen' && loaderStage !== 'blur-transition') ? 0 : 30
-                }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="font-anton text-[18vw] sm:text-[16vw] md:text-[14vw] uppercase tracking-tighter leading-[0.8] text-white select-none mt-3 md:mt-5 overflow-hidden"
-              >
-                {secondNum.toString().padStart(2, '0')}
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Centered LOGIN CTA Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ 
-              opacity: loaderStage === 'login-screen' ? 1 : 0,
-              y: loaderStage === 'login-screen' ? 0 : 40,
-              scale: loaderStage === 'login-screen' ? 1 : 0.9,
-              filter: loaderStage === 'blur-transition' ? 'blur(8px)' : 'blur(0px)'
+              opacity: (loaderStage === 'login-screen' || loaderStage === 'counting-first' || loaderStage === 'counting-second') ? 0.8 : 0,
+              y: (loaderStage === 'login-screen' || loaderStage === 'counting-first' || loaderStage === 'counting-second') ? 0 : -25,
             }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className={`fixed inset-x-0 bottom-[18vh] z-[110] flex flex-col items-center justify-center ${loaderStage !== 'login-screen' ? 'pointer-events-none' : ''}`}
+            className="absolute top-10 left-0 right-0 z-[120] pointer-events-none flex justify-center"
           >
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 45px rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.8)' }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => {
-                setLoaderStage('blur-transition');
-              }}
-              className="px-14 py-4 md:px-16 md:py-4.5 rounded-full bg-white text-black font-anton text-lg tracking-[0.25em] font-extrabold shadow-[0_20px_60px_rgba(0,0,0,0.85)] border border-white/50 cursor-pointer pointer-events-auto select-none transition-all duration-300 hover:bg-zinc-100 uppercase"
-            >
-              LOGIN TO ARENA
-            </motion.button>
-            <span className="mt-4 font-mono text-[9px] uppercase tracking-[0.35em] text-zinc-500 animate-pulse select-none">
-              Tap to enter 2026 World Cup Experience
-            </span>
+            <div className="px-8 py-3 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl shadow-[0_15px_45px_rgba(0,0,0,0.95)]">
+              <span className="font-sans font-black text-[9px] md:text-[11px] uppercase tracking-[0.50em] text-white select-none whitespace-nowrap">
+                JOSIAH JOHNMARK
+              </span>
+            </div>
+          </motion.div>
+
+          {/* LEFT SLIDING PANEL - Represents left half */}
+          <motion.div
+            animate={{ 
+              x: loaderStage === 'splitting' ? '-100%' : '0%'
+            }}
+            transition={{ ease: [0.16, 1, 0.3, 1], duration: 1.6 }}
+            className="absolute top-0 bottom-0 left-0 w-[50.15vw] bg-[#010204] z-[100] overflow-hidden border-r border-white/5"
+          >
+            {/* Center-aligned container shifted so its horizontal center is in the middle of the screen */}
+            <div className="absolute top-0 left-0 h-full w-screen flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col items-center justify-center gap-12 sm:gap-14 md:gap-16 lg:gap-20 select-none">
+                {/* FIFA Title - Custom highly polished Bold Sans-Serif style with generous tracking */}
+                <h2 className="font-sans font-black text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[7vw] uppercase tracking-[0.25em] text-white leading-none">
+                  FIFA
+                </h2>
+
+                {/* Spacer block simulating button size to line up the layout beautifully */}
+                <div className="h-[14vh] flex items-center justify-center">
+                  {loaderStage !== 'login-screen' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="font-sans font-black text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[7vw] uppercase tracking-[0.25em] text-white leading-none drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)]"
+                    >
+                      {firstNum.toString().padStart(2, '0')}{secondNum.toString().padStart(2, '0')}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RIGHT SLIDING PANEL - Represents right half */}
+          <motion.div
+            animate={{ 
+              x: loaderStage === 'splitting' ? '100%' : '0%'
+            }}
+            transition={{ ease: [0.16, 1, 0.3, 1], duration: 1.6 }}
+            className="absolute top-0 bottom-0 right-0 w-[50.15vw] bg-[#010204] z-[100] overflow-hidden"
+          >
+            {/* Center-aligned container shifted so its horizontal center is in the middle of the screen */}
+            <div className="absolute top-0 right-0 h-full w-screen flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col items-center justify-center gap-12 sm:gap-14 md:gap-16 lg:gap-20 select-none">
+                {/* FIFA Title */}
+                <h2 className="font-sans font-black text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[7vw] uppercase tracking-[0.25em] text-white leading-none">
+                  FIFA
+                </h2>
+
+                {/* 2026 Numbers */}
+                <div className="h-[14vh] flex items-center justify-center">
+                  {loaderStage !== 'login-screen' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="font-sans font-black text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[7vw] uppercase tracking-[0.25em] text-white leading-none drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)]"
+                    >
+                      {firstNum.toString().padStart(2, '0')}{secondNum.toString().padStart(2, '0')}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Centered LOGIN CTA Button - Dissolves smoothly on click */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ 
+              opacity: loaderStage === 'login-screen' ? 1 : 0,
+              y: loaderStage === 'login-screen' ? 0 : 30,
+              scale: loaderStage === 'login-screen' ? 1 : 0.95,
+            }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className={`fixed inset-x-0 h-full z-[110] flex flex-col items-center justify-center ${loaderStage !== 'login-screen' ? 'pointer-events-none' : ''}`}
+          >
+            {/* Align vertical position perfectly using an offset to cover the numbers container */}
+            <div className="mt-12 md:mt-20 lg:mt-24 flex flex-col items-center justify-center pb-2">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 0 45px rgba(255,255,255,0.45)', borderColor: 'rgba(255,255,255,0.8)' }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => {
+                  setLoaderStage('counting-first');
+                }}
+                className="px-14 py-4 md:px-16 md:py-4.5 rounded-full bg-white text-black font-sans font-black text-xs md:text-sm tracking-[0.25em] shadow-[0_20px_60px_rgba(0,0,0,0.95)] border border-white/50 cursor-pointer pointer-events-auto select-none transition-all duration-300 hover:bg-zinc-100 uppercase"
+              >
+                LOGIN TO ARENA
+              </motion.button>
+              <span className="mt-4 font-mono text-[8px] md:text-[9px] uppercase tracking-[0.35em] text-zinc-500 animate-pulse select-none">
+                Tap to enter 2026 World Cup Experience
+              </span>
+            </div>
           </motion.div>
 
         </div>
