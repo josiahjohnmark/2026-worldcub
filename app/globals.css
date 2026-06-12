@@ -277,5 +277,105 @@
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* HIGH-FIDELITY MOBILE LANDSCAPE & SMALL HEIGHT VISUAL OPTIMIZER */
+@media (max-height: 560px) {
+  /* Scale-down header container */
+  #app-header {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+  
+  /* Shrink badge images to look like compact elegant corner pins */
+  #app-header img {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  /* Shrink glass navigation items */
+  #desktop-nav {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  #desktop-nav button {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  #desktop-nav button span {
+    font-size: 8px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  /* Compact Footer navigation list */
+  #app-footer {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  #status-container {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    font-size: 9px !important;
+    gap: 0.5rem !important;
+  }
+
+  #status-container button {
+    font-size: 9px !important;
+    letter-spacing: 0.15em !important;
+  }
+
+  /* Scale and control 3D Three.js Ball Container bounds */
+  .threed-ball-container {
+    width: 260px !important;
+    height: 260px !important;
+  }
+
+  /* Scale down Giant Title to be fully legibly bounded behind the team */
+  .team-display-title {
+    font-size: 13vw !important;
+    letter-spacing: 0.14em !important;
+    margin-bottom: min(15vh, 120px) !important;
+  }
+
+  /* Scale down the absolute translation to fit behind compact team images */
+  .team-title-offset {
+    transform: translateY(12vh) !important;
+  }
+
+  /* Compact Arrow keys to prevent overlapping with content */
+  .absolute.top-1/2.-translate-y-1/2.z-55 {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+  }
+  
+  /* Select specific right & left positions */
+  button[aria-label="Previous Team"] {
+    left: 0.75rem !important;
+  }
+  button[aria-label="Next Team"] {
+    right: 0.75rem !important;
+  }
+
+  .absolute.top-1/2.-translate-y-1/2.z-55 svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+}
+
+
 
 

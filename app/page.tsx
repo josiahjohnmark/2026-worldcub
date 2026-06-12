@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import WaterShaderBackground from '../components/WaterShaderBackground';
+import ThreeDBall from '../components/ThreeD_Ball';
 
 export default function Page() {
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
@@ -15,6 +16,31 @@ export default function Page() {
   const [secondNum, setSecondNum] = useState(1);
   const [loaderStage, setLoaderStage] = useState<'login-screen' | 'counting-first' | 'counting-second' | 'complete' | 'splitting' | 'dismissed'>('login-screen');
   const [trophyClicks, setTrophyClicks] = useState(0);
+  const [mustRotate, setMustRotate] = useState(false);
+
+  React.useEffect(() => {
+    const checkOrientation = () => {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      // Define mobile conditions (narrow screen widths or touch metrics)
+      const isMobileSize = window.innerWidth <= 1024;
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      
+      // If the device has portrait aspect ratio and fits typical mobile metrics
+      if (isPortrait && (isMobileSize || isTouch)) {
+        setMustRotate(true);
+      } else {
+        setMustRotate(false);
+      }
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (loaderStage === 'counting-first') {
@@ -540,7 +566,7 @@ export default function Page() {
             >
               {/* Football backdrop behind title (z-5) */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 z-5 flex items-start justify-center overflow-visible pointer-events-none">
-                <motion.img 
+                <motion.div 
                   animate={{ 
                     y: isTeamContentActive ? "-52%" : "-150%", 
                     opacity: isTeamContentActive ? 1 : 0 
@@ -552,25 +578,23 @@ export default function Page() {
                     mass: 0.9,
                     duration: 1.2
                   }}
-                  whileHover={{ 
-                    scale: 1.02,
-                    y: "-45%",
-                    transition: { duration: 0.4, ease: "easeOut" }
-                  }}
-                  src={team.footballImage} 
-                  alt={`${team.title} Football`} 
-                  className="w-[1400px] h-[1400px] md:w-[1900px] md:h-[1900px] object-contain select-none filter drop-shadow-[0_30px_70px_rgba(0,0,0,0.95)] max-w-none pointer-events-auto cursor-pointer"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
+                  className="threed-ball-container pointer-events-auto flex items-center justify-center overflow-visible"
+                >
+                  <ThreeDBall 
+                    src={team.footballImage}
+                    alt={`${team.title} Football`}
+                    isTeamContentActive={isTeamContentActive}
+                  />
+                </motion.div>
               </div>
 
               {/* Display title sits behind players (z-10) */}
               <div className="flex-1 flex flex-col items-center justify-center relative px-4 z-10">
-                <div className="text-center relative translate-y-[21vh]">
+                <div className="text-center relative translate-y-[21vh] team-title-offset">
                   <h1
-                    className="font-anton text-[30vw] sm:text-[26vw] md:text-[23vw] lg:text-[19vw] xl:text-[17vw] leading-none uppercase select-none text-white font-bold tracking-[0.18em] opacity-100 transition-all duration-1000 cubic-bezier(0.16, 1, 0.3, 1) cursor-pointer pointer-events-auto transform hover:scale-[1.03] hover:-translate-y-4 filter drop-shadow-[0_25px_45px_rgba(0,0,0,1)] hover:drop-shadow-[0_60px_100px_rgba(0,0,0,1)]"
+                    className="team-display-title font-anton text-[30vw] sm:text-[26vw] md:text-[23vw] lg:text-[19vw] xl:text-[17vw] leading-none uppercase select-none text-white font-bold tracking-[0.18em] opacity-100 transition-all duration-1000 cubic-bezier(0.16, 1, 0.3, 1) cursor-pointer pointer-events-auto transform hover:scale-[1.03] hover:-translate-y-4 filter drop-shadow-[0_25px_45px_rgba(0,0,0,1)] hover:drop-shadow-[0_60px_100px_rgba(0,0,0,1)]"
                     style={{
-                      marginBottom: '300px',
+                      marginBottom: 'min(15vh, 300px)',
                       textShadow: '0 4px 30px rgba(0,0,0,0.85)'
                     }}
                   >
@@ -829,6 +853,90 @@ export default function Page() {
             </div>
           </motion.div>
 
+        </div>
+      )}
+
+      {/* Dynamic Device Orientation Optimizer/Lock Screen Overlay */}
+      {mustRotate && (
+        <div 
+          className="fixed inset-0 z-[10000] bg-[#020407] flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden"
+          id="orientation-lock-screen"
+        >
+          {/* Intense center spotlight overlay */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08)_0%,transparent_65%)]" />
+
+          {/* Golden ambient gradient background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[140px] pointer-events-none" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+          <div className="relative max-w-sm flex flex-col items-center justify-center gap-10">
+            
+            {/* Elegant physical phone rotation graphic with circular rotating track */}
+            <div className="relative w-32 h-32 flex items-center justify-center">
+              {/* Rotating Dashed Circular Rings */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 w-full h-full rounded-full border border-dashed border-white/10"
+              />
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-[10px] w-auto h-auto rounded-full border border-dashed border-emerald-500/10"
+              />
+
+              {/* Animated Phone Body */}
+              <motion.div
+                animate={{ 
+                  rotate: [0, 90, 90, 0, 0],
+                  scale: [1, 1.08, 1.08, 1, 1],
+                  borderColor: ["rgba(255,255,255,0.15)", "rgba(16,185,129,0.45)", "rgba(16,185,129,0.45)", "rgba(255,255,255,0.15)", "rgba(255,255,255,0.15)"]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: [0.25, 1, 0.5, 1],
+                  repeatDelay: 0.8
+                }}
+                className="w-[52px] h-[92px] rounded-[1.6rem] border-2 bg-zinc-950/90 p-1 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-10"
+              >
+                {/* Simulated Device Screen Glow with mini stadium green hue */}
+                <div className="w-full h-full rounded-[1.3rem] bg-gradient-to-tr from-sky-500/10 via-emerald-500/20 to-zinc-900 border border-white/5 flex items-center justify-center">
+                  {/* Subtle FIFA text */}
+                  <span className="text-[6px] font-sans font-black tracking-[0.25em] text-white/40 uppercase">
+                    FIFA
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Premium Typography Details */}
+            <div className="flex flex-col items-center gap-4">
+              <span className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.45em] text-emerald-400 font-black animate-pulse">
+                ARENA OPTIMIZATION
+              </span>
+              
+              <h1 className="font-sans font-black text-2xl md:text-3xl text-white uppercase tracking-[0.22em] leading-tight">
+                LANDSCAPE REQUIRED
+              </h1>
+              
+              <p className="font-sans text-xs md:text-sm text-zinc-400 px-2 font-medium tracking-wide leading-relaxed">
+                To experience the 2026 World Cup Arena in perfect high-fidelity visual layout, please rotate your device to <span className="text-white font-bold">Landscape mode</span>.
+              </p>
+            </div>
+
+            {/* Waiting feedback label */}
+            <div className="mt-2 px-6 py-2.5 rounded-full bg-white/[0.02] border border-white/[0.07] backdrop-blur-md flex items-center gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.4)]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-450 font-bold">
+                Awaiting Device Rotation
+              </span>
+            </div>
+
+          </div>
         </div>
       )}
     </main>
