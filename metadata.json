@@ -1,0 +1,6 @@
+{
+  "name": "Hopes",
+  "description": "An interactive single-page hero section showcasing the word hopes with premium WebGL shader hover glow, dark red gradients, and minimalist navigation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
